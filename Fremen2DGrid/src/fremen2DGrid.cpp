@@ -14,6 +14,7 @@ ros::NodeHandle *n;
 
 typedef actionlib::SimpleActionServer<fremen2dgrid::Fremen2DGridAction> Server;
 Server* server;
+
 fremen2dgrid::Fremen2DGridResult result;
 fremen2dgrid::Fremen2DGridFeedback feedback;
 
@@ -213,29 +214,60 @@ void addTimeCallback(const std_msgs::Int64 &msg)
 
 int main(int argc,char* argv[])
 {
-	ros::init(argc, argv, "fremen2dgrid");
-	n = new ros::NodeHandle();
-	server = new Server(*n, "/fremenarray", boost::bind(&actionServerCallback, _1, server), false);
-	server->start();
-	periods = (float*)calloc(NUM_PERIODICITIES,sizeof(float));
-	for (int i=0;i<NUM_PERIODICITIES;i++) periods[i] = (24*3600)/(i+1); 
-	grids = new CFrelement2DGridSet();
-	strcpy(mapName,"default");
-	if (argc > 1) grids->load(mapName,argv[1]); 
-	ros::Subscriber subMap = n->subscribe("/map", 1, mapCallback);
-	ros::Subscriber subPredTime = n->subscribe("/predictTime", 1, predictTimeCallback);
-	ros::Subscriber subPredOrder = n->subscribe("/predictOrder", 1, predictOrderCallback);
-	ros::Subscriber subAddTime = n->subscribe("/addTime", 1, addTimeCallback);
-	ros::Subscriber subName = n->subscribe("/mapName", 1, nameCallback);
-	ros::Subscriber subSAve = n->subscribe("/mapSave", 1, mapSaveCallback);
-	pubMap = n->advertise<nav_msgs::OccupancyGrid>("/predictedMap", 1);
+  ros::init(argc, argv, "fremen2dgrid");
 
-	while (ros::ok()){
-		ros::spinOnce();
-		usleep(30000);
-	}
-	ros::shutdown();
-	delete server;
-	delete n;
-	return 0;
+  n = new ros::NodeHandle();
+
+  // 初始化 actionlib 服务器
+  server = new Server(*n, "/fremenarray", boost::bind(&actionServerCallback, _1, server), false);
+  server->start();
+
+  /*
+   * （1）periods 表示地图更新中傅里叶变换的周期，这是一个长度为 NUM_PERIODICITIES，每个元素为 float 类型的一维数组。
+   * （2）函数原型：void* calloc (size_t num, size_t size);
+   *     函数功能：在内存的动态存储区中分配 num 个长度为 size 的连续空间，函数返回一个指向分配起始地址的指针；如果分配不成功，返回 NULL。
+   *             为一个元素个数为 num 的数组分配一个内存块，每个元素的大小为 size 字节的长度，并将其所有 bits 位初始化为零。
+   *             有效的结果是分配了一个字节数为(num * size)，初始化为零（zero-initialized）的存储块。
+   *             如果 size 为零，则返回值取决于特定的库实现（它可以是空指针，也可以不是空指针），但是不得取消对返回的指针的引用。
+   *     返回值：成功时，指向函数分配的内存块的指针。该指针的类型始终为 void*，可以将其强制类型转换为所需的数据指针类型，以便将其取消引用。
+   *            如果函数未能分配所请求的内存块，则返回空指针 NULL。
+   *            （void* 表示未确定类型的指针，void* 可以指向任何类型的数据，更明确的说是指申请内存空间时
+   *             还不知道用户是用这段空间来存储什么类型的数据（比如是 char 还是 int 或者其他数据类型）。）
+   *  （3）与 malloc 的区别：calloc 在动态分配完内存后，自动初始化该内存空间为零，而 malloc 不做初始化，分配到的空间中的数据是随机数据。
+   */
+  periods = (float*)calloc(NUM_PERIODICITIES, sizeof(float));  // (float*) 表示强制类型转换，periods 指向的数组的数据类型为 float
+  for (int i = 0; i < NUM_PERIODICITIES; i++)  // NUM_PERIODICITIES 表示周期的数量，默认值为24
+  {
+	periods[i] = (24 * 3600) / (i + 1);  // 周期为 24h,12h...1h
+  }
+
+  grids = new CFrelement2DGridSet();  // Frelement 地图的集合
+
+  // mapName 为 Frelement 地图的名字，这里初始化为"default"
+  strcpy(mapName, "default");
+  if (argc > 1) grids->load(mapName,argv[1]);
+
+  // Subscriber
+  ros::Subscriber subMap = n->subscribe("/map", 1, mapCallback);
+  ros::Subscriber subPredTime = n->subscribe("/predictTime", 1, predictTimeCallback);
+  ros::Subscriber subPredOrder = n->subscribe("/predictOrder", 1, predictOrderCallback);
+  ros::Subscriber subAddTime = n->subscribe("/addTime", 1, addTimeCallback);
+  ros::Subscriber subName = n->subscribe("/mapName", 1, nameCallback);
+  ros::Subscriber subSAve = n->subscribe("/mapSave", 1, mapSaveCallback);
+
+  // Publisher
+  pubMap = n->advertise<nav_msgs::OccupancyGrid>("/predictedMap", 1);
+
+  while (ros::ok())
+  {
+	ros::spinOnce();
+	usleep(30000);
+  }
+
+  ros::shutdown();
+
+  delete server;
+  delete n;
+
+  return 0;
 }
