@@ -29,99 +29,134 @@ CFrelement2DGrid *gridB;
 ros::Publisher pubMap;
 int predictOrder = 2;
 
-CFrelement2DGridSet* grids; 
+CFrelement2DGridSet* grids;
 nav_msgs::OccupancyGrid predictedMap;
 int numArrays = 0;
 char mapName[100];
 
 void actionServerCallback(const fremen2dgrid::Fremen2DGridGoalConstPtr& goal, Server* as)
 {
-	std::stringstream mess;
+  std::stringstream mess;
 
-	//check if the element id is not too long
-	if (goal->order <0 || goal->order > NUM_PERIODICITIES)
-	{
-		result.success = false;
-		result.message = "Model order is out of bounds high. Reasonable value is 2, maximum is NUM_PERIODICITIES, minimum 0.";
-		server->setAborted(result);
-		return;
-	}
+  //check if the element id is not too long
+  // 检查输入的阶数 goal->order 是否符合要求，即是否在 0 到 NUM_PERIODICITIES 的范围内
+  if (goal->order < 0 || goal->order > NUM_PERIODICITIES)
+  {
+    result.success = false;
+	result.message = "Model order is out of bounds high. Reasonable value is 2, maximum is NUM_PERIODICITIES, minimum 0.";
+	server->setAborted(result);
+	return;
+  }
 //	if (debug) ROS_DEBUG("Command received %s %s\n",goal->operation.c_str(),goal->id.c_str());
 
-	times[0] = goal->time;
-	nav_msgs::OccupancyGrid *mapPtr = (nav_msgs::OccupancyGrid*)&goal->map;
-	if (goal->operation == "add")
+  times[0] = goal->time;  // 'predict', 'add', 'entropy' and 'evaluate' actions 输入的时间戳
+  nav_msgs::OccupancyGrid *mapPtr = (nav_msgs::OccupancyGrid*)&goal->map;  // mapPtr 指向输入的栅格地图
+
+  if (goal->operation == "add")  // 在时刻 goal->time 加入栅格地图数据
+  {
+	// 加入栅格地图 mapPtr，并返回结果 resultCode
+	int resultCode = grids->add(goal->mapName.c_str(), goal->time, mapPtr);
+
+	if (resultCode == 1)
 	{
-		int resultCode = grids->add(goal->mapName.c_str(),goal->time,mapPtr);
-		if (resultCode == 1){
-			mess << "New map " << goal->mapName << " was added to the map collection.";
-			result.message = mess.str(); 
-			server->setSucceeded(result);
-		}
-		else if (resultCode == 0){
-			mess << "Map " << goal->mapName << " was updated with measurement from time " << goal->time << ".";
-			result.message = mess.str(); 
-			server->setSucceeded(result);
-		}
-		else if (resultCode == -1){
-			mess << "Map " << goal->mapName << " has different resolution or dimensions that the one you want to add.";
-			result.message = mess.str(); 
-			server->setAborted(result);
-		}
+	  // Frelement 地图集合还不存在名字为 goal->mapName 的地图，新地图加入 Frelement 地图的集合中，返回加入地图成功结果
+	  mess << "New map " << goal->mapName << " was added to the map collection.";
+	  result.message = mess.str(); 
+	  server->setSucceeded(result);
 	}
-	else if (goal->operation == "predict")
+	else if (resultCode == 0)
 	{
-		int resultCode = grids->estimate(goal->mapName.c_str(),goal->time,mapPtr,goal->order);
-		if (resultCode >= 0){
-			mess << "Predicted the state of " << goal->mapName << " for time " << goal->time << " using FreMEn order " << goal->order;
-			result.message = mess.str();
-			server->setSucceeded(result);
-		}else{
-			mess << "Map " << goal->mapName << " was not in the map collection ";
-			result.message = mess.str(); 
-			server->setAborted(result);
-		}
+	  // Frelement 地图集合已经存在名字为 goal->mapName 的地图，新构建的局部地图加入对应的 Frelement 地图中，并且进行地图更新，返回加入地图成功。
+	  mess << "Map " << goal->mapName << " was updated with measurement from time " << goal->time << ".";
+	  result.message = mess.str();
+	  server->setSucceeded(result);
 	}
-	else if (goal->operation == "entropy")
+    else if (resultCode == -1)
 	{
-		int resultCode = grids->estimateEntropy(goal->mapName.c_str(),goal->time,mapPtr,goal->order);
-		if (resultCode >= 0){
-			mess << "Predicted the uncertainty (entropy) of " << goal->mapName << " for time " << goal->time << " using FreMEn order " << goal->order;
-			result.message = mess.str();
-			server->setSucceeded(result);
-		}else{
-			mess << "Map " << goal->mapName << " was not in the map collection ";
-			result.message = mess.str(); 
-			server->setAborted(result);
-		}
+	  // Frelement 地图集合已经存在名字为 goal->mapName 的地图，但是新构建的局部地图与 Frelement 地图的分辨率或者大小（width, height）不同
+	  // 返回加入地图失败
+	  mess << "Map " << goal->mapName << " has different resolution or dimensions that the one you want to add.";
+	  result.message = mess.str();
+	  server->setAborted(result);
 	}
-	else if (goal->operation == "evaluate")
+  }
+  else if (goal->operation == "predict")  // 在时刻 goal->time 对 Frelement 地图集合中名字为 goal->mapName 的地图进行预测
+  {
+	// 在时刻 goal->time 对地图进行预测，预测的地图保存在 mapPtr，并返回结果 resultCode
+	int resultCode = grids->estimate(goal->mapName.c_str(), goal->time, mapPtr, goal->order);
+
+	if (resultCode >= 0)
 	{
-		float errors[goal->order+1];
-		int resultCode = grids->evaluate(goal->mapName.c_str(),goal->time,mapPtr,goal->order,errors);
-		if (resultCode >= 0){
-			mess << "Evaluated the predictability of " << goal->mapName << " for time " << goal->time << " using FreMEn orders 0 to " << goal->order;
-			result.message = mess.str();
-			server->setSucceeded(result);
-		}else{
-			mess << "Map " << goal->mapName << " was not in the map collection ";
-			result.message = mess.str(); 
-			server->setAborted(result);
-		}
+	  // 地图预测成功
+	  mess << "Predicted the state of " << goal->mapName << " for time " << goal->time << " using FreMEn order " << goal->order;
+	  result.message = mess.str();
+	  server->setSucceeded(result);
 	}
-	else if (goal->operation == "print")
+	else  // resultCode < 0
 	{
-		grids->print();
-		result.success = true;
-		result.message = "Debug printed";
-		server->setSucceeded(result);
+	  // 地图预测失败，原因可能是 Frelement 地图集合中不存在名字为 goal->mapName 的地图
+	  mess << "Map " << goal->mapName << " was not in the map collection ";
+	  result.message = mess.str();
+	  server->setAborted(result);
+	}
+  }
+  else if (goal->operation == "entropy")
+  {
+	int resultCode = grids->estimateEntropy(goal->mapName.c_str(), goal->time, mapPtr, goal->order);
+
+	if (resultCode >= 0)
+	{
+	  mess << "Predicted the uncertainty (entropy) of " << goal->mapName << " for time " << goal->time << " using FreMEn order " << goal->order;
+	  result.message = mess.str();
+	  server->setSucceeded(result);
 	}
 	else
 	{
-		result.success = false;		
-		result.message = "Unknown action requested";
-		server->setAborted(result);
+	  mess << "Map " << goal->mapName << " was not in the map collection ";
+	  result.message = mess.str();
+	  server->setAborted(result);
 	}
+  }
+  else if (goal->operation == "evaluate")
+  {
+	// 根据新的局部地图 mapPtr，在给定时刻 goal->time 对 Frelement 地图集合中名字为 goal->mapName 的地图进行预测/评估，
+	// 主要是计算地图 mapPtr 与 Frelement 地图之间的误差，即计算局部地图与 Frelement 地图的匹配程度。
+	float errors[goal->order + 1];  // 地图误差
+
+    // 评估在给定时间 goal->time 的预测/估计。
+	// 若返回结果 resultCode >= 0，则评估成功，返回性能最佳的模型阶数以及 eval arra 中的误差；
+	// 若返回结果 resultCode = -1，则评估失败，原因可能是 Frelement 地图集合中不存在名字为 goal->mapName 的地图。
+	// errors[0] 的数值越小，地图的匹配程度越高。
+	int resultCode = grids->evaluate(goal->mapName.c_str(), goal->time, mapPtr, goal->order, errors);
+
+	if (resultCode >= 0)
+	{
+	  // 评估成功
+	  mess << "Evaluated the predictability of " << goal->mapName << " for time " << goal->time << " using FreMEn orders 0 to " << goal->order;
+	  result.message = mess.str();
+	  server->setSucceeded(result);
+	}
+	else
+	{
+      // 评估失败，原因可能是 Frelement 地图集合中不存在名字为 goal->mapName 的地图
+	  mess << "Map " << goal->mapName << " was not in the map collection ";
+	  result.message = mess.str(); 
+	  server->setAborted(result);
+	}
+  }
+  else if (goal->operation == "print")
+  {
+	grids->print();
+	result.success = true;
+	result.message = "Debug printed";
+	server->setSucceeded(result);
+  }
+  else
+  {
+	result.success = false;		
+	result.message = "Unknown action requested";
+	server->setAborted(result);
+  }
 }
 
 int test()
