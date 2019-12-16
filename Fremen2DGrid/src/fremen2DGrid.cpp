@@ -47,7 +47,7 @@ void actionServerCallback(const fremen2dgrid::Fremen2DGridGoalConstPtr& goal, Se
     server->setAborted(result);
     return;
   }
-//   if (debug) ROS_DEBUG("Command received %s %s\n",goal->operation.c_str(),goal->id.c_str());
+  // if (debug) ROS_DEBUG("Command received %s %s\n",goal->operation.c_str(),goal->id.c_str());
 
   times[0] = goal->time;  // 'predict', 'add', 'entropy' and 'evaluate' actions 输入的时间戳
   nav_msgs::OccupancyGrid *mapPtr = (nav_msgs::OccupancyGrid*)&goal->map;  // mapPtr 指向输入的栅格地图
@@ -73,7 +73,7 @@ void actionServerCallback(const fremen2dgrid::Fremen2DGridGoalConstPtr& goal, Se
     }
     else if (resultCode == -1)
     {
-      // Frelement 地图集合已经存在名字为 goal->mapName 的地图，但是新构建的局部地图与 Frelement 地图的分辨率或者大小（width, height）不同
+      // Frelement 地图集合已经存在名字为 goal->mapName 的地图，但是新构建的局部地图与 Frelement 地图的分辨率或者size（width, height）不同
       // 返回加入地图失败
       mess << "Map " << goal->mapName << " has different resolution or dimensions that the one you want to add.";
       result.message = mess.str();
@@ -206,18 +206,50 @@ int test()
 void mapCallback(const nav_msgs::OccupancyGrid &msg)
 {
 	int8_t *data = (int8_t*) msg.data.data();
-	//grids->add(msg.header.frame_id.c_str(),msg.info.map_load_time.sec,(nav_msgs::OccupancyGrid*)&msg);
-	float errors[5];
-	int bestO = grids->evaluate(mapName,testTime,(nav_msgs::OccupancyGrid*)&msg,4,errors);
+
+  // 把订阅的地图 msg 加入 Frelement 地图的集合中，名字为 msg.header.frame_id，加入时间为 msg.info.map_load_time.sec。
+  // 这里没有考虑地图 msg 与 Frelement 地图的一致性，即匹配程度。
+	// grids->add(msg.header.frame_id.c_str(), msg.info.map_load_time.sec, (nav_msgs::OccupancyGrid*)&msg);
+
+	float errors[5];  // 地图误差
+
+  // 评估地图 msg 与 Frelement 地图的一致性，并返回最佳的模型阶数 bestO 以及误差 errors。
+  // 输入阶数为4，Frelement 地图的名字为 mapName，评估的时间为 testTime。
+	int bestO = grids->evaluate(mapName, testTime, (nav_msgs::OccupancyGrid*)&msg, 4, errors);
 	printf("Best model %i %f\n",bestO,errors[bestO]);
-	if (errors[bestO] < 0.025){ //0.03 without recency
-		int result = grids->add(mapName,testTime,(nav_msgs::OccupancyGrid*)&msg);
-		if (result ==  0) printf("Map %s updated with info from %i\n",mapName,testTime);
-		if (result ==  1) printf("New map %s created from time %i\n",mapName,testTime);
-		if (result == -1) printf("Map %s dimension mismatch\n",mapName); 
-		if (result >= 0) predictedMap = msg;
-		grids->estimate(mapName,testTime,&predictedMap,0);
+
+  // 根据地图 msg 与 Frelement 地图一致性的评估结果，判断是否把订阅的地图 msg 加入 Frelement 地图的集合中，
+  // 并获取预测地图 predictedMap。
+	if (errors[bestO] < 0.025)  //0.03 without recency
+  {
+    // 把订阅的地图 msg 加入 Frelement 地图的集合中，名字为 mapName，加入时间为 testTime。
+		int result = grids->add(mapName, testTime, (nav_msgs::OccupancyGrid*)&msg);
+
+		if (result ==  0)  // Frelement 地图集合中已存在名字为 mapName 的地图，加入新地图 msg 并对 Frelement 地图进行更新
+    {
+      printf("Map %s updated with info from %i\n", mapName, testTime);
+    }
+
+		if (result ==  1)  // Frelement 地图集合中还不存在名字为 mapName 的地图，把新地图 msg 加入 Frelement 地图集合
+    {
+      printf("New map %s created from time %i\n", mapName, testTime);
+    }
+    
+		if (result == -1)  // 新地图 msg 与 Frelement 地图的分辨率或者 size 不同
+    {
+      printf("Map %s dimension mismatch\n", mapName);
+    }
+    
+		if (result >= 0)
+    {
+      predictedMap = msg;
+    }
+    
+    // 对更新的地图进行预测，预测的时间为 testTime，预测的地图保存在 predictedMap，阶数为0
+		grids->estimate(mapName, testTime, &predictedMap, 0);
 	}
+
+  // 发布预测地图 predictedMap
 	pubMap.publish(predictedMap);
 }
 
