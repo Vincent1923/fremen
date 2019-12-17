@@ -2,16 +2,21 @@
 
 using namespace std;
 
+// 构造函数
 CFrelement2DGridSet::CFrelement2DGridSet()
 {
-	numGrids = 0;
-	activeIndex = 0;
-	active = NULL;
+  numGrids = 0;
+  activeIndex = 0;
+  active = NULL;
 }
 
+// 析构函数
 CFrelement2DGridSet::~CFrelement2DGridSet()
 {
-	for (int i=0;i<numGrids;i++) delete grids[i];
+  for (int i = 0; i < numGrids; i++)
+  {
+	delete grids[i];  // 清空 Frelement 地图数据
+  }
 }
 
 int CFrelement2DGridSet::add(const char *name,uint32_t time,nav_msgs::OccupancyGrid *map)

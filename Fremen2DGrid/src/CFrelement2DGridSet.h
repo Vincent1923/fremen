@@ -61,15 +61,16 @@ class CFrelement2DGridSet
 
   int print();
 
-  CFrelement2DGrid* active;
+  CFrelement2DGrid* active;  // 指向当前激活的 Frelement 地图
 
  private:
   bool find(const char *name);
 
-  // grids 为指针数组，它有 MAX_LENGTH 个指针类型的数组元素，每一个元素指向 CFrelement2DGrid 类型的变量
+  // grids 为 Frelement 地图数组
+  // grids 是一个指针数组，它有 MAX_LENGTH 个指针类型的数组元素，每一个元素指向 CFrelement2DGrid 类型的变量
   CFrelement2DGrid* grids[MAX_LENGTH];
-  int numGrids;
-  int activeIndex;
+  int numGrids;     // Frelement 地图数组的地图数量
+  int activeIndex;  // 当前激活的地图的下标
 };
 
 #endif //CEDGESTATISTICS_H
