@@ -29,6 +29,7 @@ class CFrelement2DGrid
     - 返回存储的栅格数*/
   /**
    * @brief add         添加一个新的2d栅格地图，如果它是第一个添加的栅格地图，则存储其参数并它的每个单元格有以下形式
+   *                    状态是[-1..100]，其中 -1 是未知区域，0 是自由空间，100 是被占据的障碍物
    * @param time        添加新地图的时间
    * @param states      新地图每一个单元格的占据率
    * @param width       新地图的 width
@@ -38,7 +39,7 @@ class CFrelement2DGrid
    * @param resolution  新地图的分辨率
    * @return            如果它是第一个添加的栅格地图，则返回 1；
    *                    如果它不是第一个添加的栅格地图，并且添加成功，则返回 0；
-   *                    如果新地图的width，height 或 resolution 与原有的 Frelement 地图不同，则添加失败并返回 -1
+   *                    如果新地图的 width，height 或 resolution 与原有的 Frelement 地图不同，则添加失败并返回 -1
    */
   int add(uint32_t time, int8_t states[], int width, int height,
           float originX, float originY, float resolution);
