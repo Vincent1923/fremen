@@ -62,10 +62,10 @@ bool CFrelement2DGridSet::find(const char *name)
 // 对栅格地图在时刻 time 的单元格占用率进行预测和估计，即在时刻 time 对可能出现的整张地图进行预测
 int CFrelement2DGridSet::estimate(const char *name, uint32_t time, nav_msgs::OccupancyGrid *map, int order)
 {
-  // find() 函数根据“name”查找 Frelement 地图集合 grids[i] 中是否已经存在对应名字的地图，若找不到则返回 false
+  // 集合中不存在具有给定 ID 的地图，返回 -1
   if (find(name) == false)
   {
-	return -1;  // 集合中不存在具有给定 ID 的地图，返回 -1
+	return -1;
   }
 
   // 集合中存在具有给定 ID 的地图并且对地图预测成功，返回 true
@@ -78,10 +78,19 @@ int CFrelement2DGridSet::estimateEntropy(const char *name,uint32_t time,nav_msgs
 	return active->estimateEntropy(time,map->data.data(),order);
 }
 
-int CFrelement2DGridSet::evaluate(const char *name,uint32_t time,nav_msgs::OccupancyGrid *map,int order,float errors[])
+// 评估给定时间的预测/估计
+// 根据新构建的地图 map，在给定时刻 time 对 ID 为 name 的 Frelement 地图进行预测/评估，
+// 主要是计算地图 map 与 Frelement 地图之间的误差，即计算新构建的地图与 Frelement 地图的匹配程度（一致性）。
+int CFrelement2DGridSet::evaluate(const char *name, uint32_t time, nav_msgs::OccupancyGrid *map, int order, float errors[])
 {
-	if (find(name) == false) return -1;
-	return active->evaluate(time,map->data.data(),order,errors);;
+  // 集合中不存在具有给定 ID 的地图，返回 -1
+  if (find(name) == false)
+  {
+    return -1;
+  }
+
+  // 计算地图一致性成功，返回表现最佳的模型阶数和 eval 数组中的 errors
+  return active->evaluate(time, map->data.data(), order, errors);
 }
 
 int CFrelement2DGridSet::print()

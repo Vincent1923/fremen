@@ -66,7 +66,19 @@ class CFrelement2DGridSet
   /*评估给定时间的预测/估计
     如果集合中不存在具有给定ID的状态，则返回-1
     否则返回表现最佳的模型阶数和 eval 数组中的 errors*/
-  int evaluate(const char *name,uint32_t time,nav_msgs::OccupancyGrid *map,int order,float errs[]);
+  /**
+   * @brief evaluate  评估给定时间的预测/估计
+   *                  根据新构建的地图 map，在给定时刻 time 对 ID 为 name 的 Frelement 地图进行预测/评估，
+   *                  主要是计算地图 map 与 Frelement 地图之间的误差，即计算新地图与 Frelement 地图的匹配程度（一致性）
+   * @param name      Frelement 地图的 ID
+   * @param time      计算两张地图一致性的时间
+   * @param map       需要跟 Frelement 地图进行一致性评估的栅格地图
+   * @param order     表现最佳的模型阶数
+   * @param errs[]    地图误差
+   * @return          如果 Frelement 地图集合中不存在具有给定 ID 的地图，则返回 -1；
+   *                  返回表现最佳的模型阶数和 eval 数组中的 errors
+   */
+  int evaluate(const char *name, uint32_t time, nav_msgs::OccupancyGrid *map, int order, float errs[]);
 
   /*remove states from the collection
     return the number of remaining states*/
