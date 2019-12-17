@@ -45,7 +45,15 @@ class CFrelement2DGridSet
   /*估计在给定时间的单元格的占用率
     如果集合中不存在具有给定ID的状态，则返回 false
     否则返回 true，并用计算的预测填充地图*/
-  int estimate(const char *name,uint32_t time,nav_msgs::OccupancyGrid *map,int order);
+  /**
+   * @brief estimate  在给定时间对地图单元格的占用率进行预测和估计，即在时刻 time 对可能出现的整张地图进行预测
+   * @param name      Frelement 地图的 ID
+   * @param time      对地图单元格的占用率进行预测和估计的时间
+   * @param map       预测后的地图
+   * @param order     输入的阶数
+   * @return          如果 Frelement 地图集合中不存在具有给定 ID 的地图，则返回 false；否则返回 true，并用计算的预测填充地图
+   */
+  int estimate(const char *name, uint32_t time, nav_msgs::OccupancyGrid *map, int order);
 
   /*estimate occupancy entropy of the cells for given times 
     returns false if the state with the given ID is not present in the collection

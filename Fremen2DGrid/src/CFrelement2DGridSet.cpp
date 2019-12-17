@@ -59,10 +59,17 @@ bool CFrelement2DGridSet::find(const char *name)
   return true;
 }
 
-int CFrelement2DGridSet::estimate(const char *name,uint32_t time,nav_msgs::OccupancyGrid *map,int order)
+// 对栅格地图在时刻 time 的单元格占用率进行预测和估计，即在时刻 time 对可能出现的整张地图进行预测
+int CFrelement2DGridSet::estimate(const char *name, uint32_t time, nav_msgs::OccupancyGrid *map, int order)
 {
-	if (find(name) == false)return -1;
-	return active->estimate(time,map->data.data(),order);
+  // find() 函数根据“name”查找 Frelement 地图集合 grids[i] 中是否已经存在对应名字的地图，若找不到则返回 false
+  if (find(name) == false)
+  {
+	return -1;  // 集合中不存在具有给定 ID 的地图，返回 -1
+  }
+
+  // 集合中存在具有给定 ID 的地图并且对地图预测成功，返回 true
+  return active->estimate(time, map->data.data(), order);
 }
 
 int CFrelement2DGridSet::estimateEntropy(const char *name,uint32_t time,nav_msgs::OccupancyGrid *map,int order)
