@@ -55,7 +55,7 @@ class CFrelement2DGridSet
    */
   int estimate(const char *name, uint32_t time, nav_msgs::OccupancyGrid *map, int order);
 
-  /*estimate occupancy entropy of the cells for given times 
+  /*estimate occupancy entropy of the cells for given times
     returns false if the state with the given ID is not present in the collection
     otherwise returns true and fills the map with the calculated predictions*/
   int estimateEntropy(const char *name,uint32_t time,nav_msgs::OccupancyGrid *map,int order);
