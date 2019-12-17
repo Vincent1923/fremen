@@ -15,7 +15,7 @@ CFrelement2DGridSet::~CFrelement2DGridSet()
 {
   for (int i = 0; i < numGrids; i++)
   {
-	delete grids[i];  // 清空 Frelement 地图数据
+    delete grids[i];  // 清空 Frelement 地图数据
   }
 }
 
@@ -28,9 +28,9 @@ int CFrelement2DGridSet::add(const char *name, uint32_t time, nav_msgs::Occupanc
   bool exists = find(name);
   if (exists == false)  // 如果找不到，则在 grids[] 数组中新建一张名字为 name 的 Frelement 地图
   {
-	grids[numGrids++] = new CFrelement2DGrid(name);  // 新建 ID 为 name 的 Frelement 地图
-	activeIndex = numGrids - 1;    // activeIndex 设置为当前新建的地图索引
-	active = grids[numGrids - 1];  // active 指向当前新建的 Frelement 地图
+    grids[numGrids++] = new CFrelement2DGrid(name);  // 新建 ID 为 name 的 Frelement 地图
+    activeIndex = numGrids - 1;    // activeIndex 设置为当前新建的地图索引
+    active = grids[numGrids - 1];  // active 指向当前新建的 Frelement 地图
   }
 
   // 在当前激活地图 active 中添加新构建的地图 map
@@ -65,7 +65,7 @@ int CFrelement2DGridSet::estimate(const char *name, uint32_t time, nav_msgs::Occ
   // 集合中不存在具有给定 ID 的地图，返回 -1
   if (find(name) == false)
   {
-	return -1;
+    return -1;
   }
 
   // 集合中存在具有给定 ID 的地图并且对地图预测成功，返回 true
@@ -74,8 +74,12 @@ int CFrelement2DGridSet::estimate(const char *name, uint32_t time, nav_msgs::Occ
 
 int CFrelement2DGridSet::estimateEntropy(const char *name,uint32_t time,nav_msgs::OccupancyGrid *map,int order)
 {
-	if (find(name) == false)return -1;
-	return active->estimateEntropy(time,map->data.data(),order);
+  if (find(name) == false)
+  {
+    return -1;
+  }
+
+  return active->estimateEntropy(time, map->data.data(), order);
 }
 
 // 评估给定时间的预测/估计
