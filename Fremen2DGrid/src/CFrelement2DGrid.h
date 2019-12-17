@@ -59,13 +59,17 @@ class CFrelement2DGrid
   /*idecko voe*/
   char id[255];  // Frelement 地图的名字
 
-  int numFrelements;  // numFrelements 表示栅格地图总的单元格数量
+  int numFrelements;  // Frelement 地图总的单元格数量
+  // frelementArray 为一个二维数组。
+  // 数组的第一个维度大小为 numFrelements，这是 Frelement 地图总的单元格数量，所以第一个维度是一张 Frelement 地图，
+  // 第一个维度的每一个元素为指向 CFrelement 的指针，即每一个元素为一个 CFrelement 类型的数组。
+  // 第二个维度表示 Frelement 地图单个单元格的占据率，大小随着观察值的加入而不断增加。
   CFrelement** frelementArray;
-  int width;
-  int height;
-  float resolution;
-  float originX;
-  float originY;
+  int width;         // Frelement 地图的 width
+  int height;        // Frelement 地图的 height
+  float resolution;  // Frelement 地图的分辨率
+  float originX;     // Frelement 地图原点的x坐标
+  float originY;     // Frelement 地图原点的y坐标
 };
 
 #endif

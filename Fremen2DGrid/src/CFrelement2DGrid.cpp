@@ -1,30 +1,39 @@
 #include "CFrelement2DGrid.h"
 
 using namespace std;
+
 static bool debug = true;
 
 extern float *periods;
 
+// 构造函数
 CFrelement2DGrid::CFrelement2DGrid(const char* name)
 {
-	strcpy(id,name);
-	numFrelements = 0;
-	height = 0;
-	width = 0;
-	originX = 0;
-	originY = 0;
-	resolution = 0;
-	frelementArray = NULL;
+  strcpy(id, name);  // 对 Frelement 地图的 ID 赋值为 name
+  numFrelements = 0;
+  height = 0;
+  width = 0;
+  originX = 0;
+  originY = 0;
+  resolution = 0;
+  frelementArray = NULL;
 }
 
+// 析够函数
 CFrelement2DGrid::~CFrelement2DGrid()
 {
-	if (frelementArray !=NULL){
-		for (int i=0;i<numFrelements;i++){
-			if (frelementArray[i] != NULL) delete frelementArray[i];
-		}
-		free(frelementArray);
-	}
+  if (frelementArray != NULL)
+  {
+    for (int i = 0; i < numFrelements; i++)
+    {
+      if (frelementArray[i] != NULL)
+	  {
+        delete frelementArray[i];  // 清空 Frelement 地图每一个单元格
+	  }
+    }
+
+    free(frelementArray);  // 清空 Frelement 地图
+  }
 }
 
 int CFrelement2DGrid::add(uint32_t time,int8_t states[],int widthi,int heighti,float originXi,float originYi,float resolutioni)
