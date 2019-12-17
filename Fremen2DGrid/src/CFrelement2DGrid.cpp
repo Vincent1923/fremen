@@ -36,34 +36,56 @@ CFrelement2DGrid::~CFrelement2DGrid()
   }
 }
 
-int CFrelement2DGrid::add(uint32_t time,int8_t states[],int widthi,int heighti,float originXi,float originYi,float resolutioni)
+int CFrelement2DGrid::add(uint32_t time, int8_t states[], int widthi, int heighti,
+                          float originXi, float originYi, float resolutioni)
 {
-	int result = -1;
-	/*is this a new map ? if yes, initialise all stuff*/
-	if (numFrelements == 0)
+  int result = -1;
+
+  /*is this a new map ? if yes, initialise all stuff*/
+  // 检查 Frelement 地图是否是新的，如果是，则进行初始化
+  if (numFrelements == 0)
+  {
+    height = heighti;
+    width = widthi;
+    numFrelements = height * width;  // numFrelements 表示栅格地图总的单元格数量，即地图总的像素点个数
+    originX = originXi;
+    originY = originYi;
+    resolution = resolutioni;
+
+    // 为 frelementArray 分配 numFrelements 个大小为 sizeof(CFrelement*) 的内存空间。
+	// frelementArray 为一个二维数组，第一个维度的大小为 numFrelements，表示总的单元格，
+	// 第一维度的每一个元素为指向 CFrelement 数据类型的指针，这是一个 CFrelement 类型的数组。
+    frelementArray = (CFrelement**)malloc(numFrelements * sizeof(CFrelement*));
+
+    for (int i = 0; i < numFrelements; i++)
 	{
-		height = heighti;
-		width = widthi;
-		numFrelements = height*width;
-		originX = originXi;
-		originY = originYi;
-		resolution = resolutioni;
-		frelementArray = (CFrelement**)malloc(numFrelements*sizeof(CFrelement*));
-		for (int i = 0;i<numFrelements;i++) frelementArray[i] = NULL;
-		result = 1;
+      frelementArray[i] = NULL;
 	}
-	if (height == heighti && width == widthi && resolution == resolutioni){ 
-		for (int i = 0;i<numFrelements;i++)
-		{
-			if (states[i] != -1){
-				if (frelementArray[i] == NULL) frelementArray[i] = new CFrelement();
-				float signal = ((float)states[i])/100.0;
-				frelementArray[i]->add(&time,&signal,1);
-			}
+
+    result = 1;
+  }
+
+  // 检查新加入地图的 size 维度以及地图分辨率是否相同
+  if (height == heighti && width == widthi && resolution == resolutioni)
+  { 
+    for (int i = 0; i < numFrelements; i++)  // 遍历栅格地图
+    {
+      if (states[i] != -1)  // 查找栅格地图中的已探索区域（-1表示未探索区域），即自由空间或者障碍物
+      {
+        if (frelementArray[i] == NULL)
+        {
+          frelementArray[i] = new CFrelement();  // 为 CFrelement2DGrid 地图中已探索区域的单元格新建一个 CFrelement
 		}
-		result = 0;
-	}
-	return result; 
+
+        float signal = ((float)states[i]) / 100.0;  // signal 按 100 缩放
+        frelementArray[i]->add(&time, &signal, 1);  // 对每一个单元格添加观察值
+      }
+    }
+
+    result = 0;
+  }
+
+  return result;
 }
 
 int CFrelement2DGrid::estimate(uint32_t time,int8_t states[],int order)

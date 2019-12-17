@@ -27,7 +27,21 @@ class CFrelement2DGrid
     - 添加一个新的2d栅格地图，如果它是第一个添加的栅格地图，则存储其参数并有以下栅格
     - 状态是[-1..100]，其中-1是未知的，0是空闲的，100是被占用的
     - 返回存储的栅格数*/
-  int add(uint32_t time, int8_t states[], int width, int height, float originX, float originY, float resolution);
+  /**
+   * @brief add         添加一个新的2d栅格地图，如果它是第一个添加的栅格地图，则存储其参数并它的每个单元格有以下形式
+   * @param time        添加新地图的时间
+   * @param states      新地图每一个单元格的占据率
+   * @param width       新地图的 width
+   * @param height      新地图的 height
+   * @param originX     新地图原点的x坐标
+   * @param originY     新地图原点的y坐标
+   * @param resolution  新地图的分辨率
+   * @return            如果它是第一个添加的栅格地图，则返回 1；
+   *                    如果它不是第一个添加的栅格地图，并且添加成功，则返回 0；
+   *                    如果新地图的width，height 或 resolution 与原有的 Frelement 地图不同，则添加失败并返回 -1
+   */
+  int add(uint32_t time, int8_t states[], int width, int height,
+          float originX, float originY, float resolution);
 
   /*estimates the occupancy probabilities [0..100] for the given time with a given order 
     returns the number of predicted cells*/
