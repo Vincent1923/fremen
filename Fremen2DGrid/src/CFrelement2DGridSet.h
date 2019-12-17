@@ -30,6 +30,13 @@ class CFrelement2DGridSet
     - 如果名称（ID）是新的，则创建该函数的新状态
     - 如果不是，则将测量值添加到具有给定ID的状态
     - 返回集合中集合的索引*/
+  /**
+   * @brief add   添加新的测量值，即添加新构建的地图到 Frelement 地图集合中
+   * @param name  Frelement 地图的 ID
+   * @param time  添加新构建地图的时间
+   * @param map   新的测量值，即新构建的地图
+   * @return      集合中 ID 为 name 的地图索引
+   */
   int add(const char *name, uint32_t time, nav_msgs::OccupancyGrid *map);
 
   /*estimate occupancy of the cells for given times
@@ -64,6 +71,11 @@ class CFrelement2DGridSet
   CFrelement2DGrid* active;  // 指向当前激活的 Frelement 地图
 
  private:
+  /**
+   * @brief find  根据“name”查找 Frelement 地图集合 grids[i] 中是否已经存在对应 ID 的地图
+   * @param name  需要查找的 ID
+   * @return      若没找到，则返回 false；若找到了，则返回 true
+   */
   bool find(const char *name);
 
   // grids 为 Frelement 地图数组
