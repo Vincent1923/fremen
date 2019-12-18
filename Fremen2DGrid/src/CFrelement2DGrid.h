@@ -51,7 +51,7 @@ class CFrelement2DGrid
   /**
    * @brief estimate  使用给定的阶数，在给定时间对栅格地图每一个单元格的占据概率进行估计，占据概率的范围为[0..100]
    * @param time      估计栅格地图的占据概率的时间
-   * @param states    估计的栅格地图的占据率
+   * @param states    估计的栅格地图
    * @param order     给定的阶数
    * @return          0
    */
@@ -67,6 +67,16 @@ class CFrelement2DGrid
   /*评估给定时间的预测/估计
     如果集合中不存在具有给定ID的状态，则返回-1
     否则返回表现最佳的模型阶数和 eval 数组中的 errors*/
+  /**
+   * @brief evaluate  使用给定的阶数，在给定时间对输入的栅格地图进行评估
+   *                  使用给定的阶数 order，在给定时刻 time 对新构建的地图数据 states[] 进行预测/评估，并返回误差数组 errs[]
+   *                  主要是计算输入地图数据 states[] 与 Frelement 地图之间的误差，即计算新地图与 Frelement 地图的匹配程度（一致性）
+   * @param time      估计栅格地图的占据概率的时间
+   * @param states    输入的要评估的栅格地图
+   * @param order     给定的阶数
+   * @param errs      要评估的栅格地图与 Frelement 地图的误差数组
+   * @return          0
+   */
   int evaluate(uint32_t time, int8_t states[], int order, float []);
 
   /*print grid info*/

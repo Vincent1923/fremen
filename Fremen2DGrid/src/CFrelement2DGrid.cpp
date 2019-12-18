@@ -133,33 +133,63 @@ int CFrelement2DGrid::estimateEntropy(uint32_t time,int8_t states[],int order)
 }
 
 //not functional!
-int CFrelement2DGrid::evaluate(uint32_t time,int8_t states[],int order,float errs[])
+// 使用给定的阶数 order，在给定时刻 time 对新构建的地图数据 states[] 进行预测/评估，并返回误差数组 errs[]。
+// 主要是计算输入地图数据 states[] 与 Frelement 地图之间的误差，即计算新地图与 Frelement 地图的匹配程度（一致性）。
+// 值得注意的是，errs[] 数组的长度为 order + 1
+int CFrelement2DGrid::evaluate(uint32_t time, int8_t states[], int order, float errs[])
 {
-	for (int i = 0;i<=order;i++) errs[i] = 0;
-	float evals[order+1];
-	int numEvaluated = 0;
-	for (int i = 0;i<numFrelements;i++)
+  // 对地图误差进行初始化
+  for (int i = 0; i <= order; i++)
+  {
+    errs[i] = 0;
+  }
+
+  float evals[order + 1];  // evals[] 数组的长度跟 errs[] 一样，也为 order + 1
+  int numEvaluated = 0;    // numEvaluated 表示栅格地图中进行评估的单元格总的数量
+
+  // 遍历栅格地图
+  for (int i = 0; i < numFrelements; i++)
+  {
+	// 检查该单元格是否为输入地图数据 states[] 中的 free（自由空间）或者 occupancy（障碍物）区域，
+	// 以及检查该单元格是否为 Frelement 地图的已分配空间的栅格。
+    if (states[i] != -1 && frelementArray[i] != NULL)
+    {
+      float signal = ((float)states[i]) / 100.0;  // signal 按 100 进行缩放
+
+      // 在给定时间 time，评估单元格的测量值 signal 的预测误差，即对该单元格进行一致性的评估。
+	  // 1 表示 length，order 表示阶数，evals 表示返回的估计数组。
+      frelementArray[i]->evaluate(&time, &signal, 1, order, evals);
+
+      for (int i = 0; i <= order; i++)
+	  {
+        errs[i] += evals[i];  // 在阶数 i 下，对所有单元格的评估数值的累加
+	  }
+
+      numEvaluated++;
+    }
+  }
+
+  if (numEvaluated > 0)
+  {
+    for (int i = 0; i <= order; i++)
 	{
-		if (states[i] != -1 && frelementArray[i] != NULL)
-		{
-			float signal = ((float)states[i])/100.0;
-			frelementArray[i]->evaluate(&time,&signal,1,order,evals);
-			for (int i = 0;i<=order;i++) errs[i] += evals[i];
-			numEvaluated++;
-		}
+      errs[i] = errs[i] / numEvaluated;  // errs[i] 为在阶数 i 下，所有单元格的平均评估数值
 	}
-	if (numEvaluated > 0) for (int i = 0;i<=order;i++) errs[i]=errs[i]/numEvaluated;
-	
-	int index = 0;
-	float minError = 100000;
-	for (int i = 0;i<=order;i++){
-	       	if (errs[i]<minError)
-		{
-			index = i;	
-			minError = errs[i];	
-		}
-	}
-	return 0;
+  }
+
+  int index = 0;
+  float minError = 100000;
+
+  for (int i = 0; i <= order; i++)
+  {
+    if (errs[i] < minError)
+    {
+      index = i;	
+      minError = errs[i];	
+    }
+  }
+
+  return 0;
 }
 
 bool CFrelement2DGrid::print(int order)
