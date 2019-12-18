@@ -49,52 +49,93 @@ CFrelement::~CFrelement()
 }
 
 // adds new state observations at given times
-int CFrelement::add(uint32_t times[],float states[],int length)
+// 在给定的时间 times 添加新的状态观察值 states
+int CFrelement::add(uint32_t times[], float states[], int length)
 {
-	if (measurements == 0 && length > 0) firstTime = times[0];
-	int firstIndex = 0;
+  if (measurements == 0 && length > 0)
+  {
+    firstTime = times[0];  // times[0] 表示 goal 请求的时间，即添加观察值的时间
+  }
 
-	//discard already known observations 
-	for (int i=0;i<length;i++)if (times[i] <= lastTime)firstIndex++;
-	int numUpdated = length-firstIndex;
+  int firstIndex = 0;
 
-	//verify if there is an actual update
-	if (numUpdated <= 0)return numUpdated;
-	lastTime = times[length-1];
-	lastMeasurement = states[length-1];
-	//update the gains accordingly 
-	float oldGain=0;
-	float newGain=0;
-	for (int j = firstIndex;j<length;j++)newGain+=states[j];
-	gain = (gain*measurements+newGain)/(measurements+length);
-	if (gain > 0 && components == NULL) initializeFrequencies();
-	if (components != NULL){
-		//recalculate spectral balance - this is beneficial is the process period does not match the length of the data
-		if (oldGain > 0){
-			for (int i = 0;i<NUM_PERIODICITIES;i++)
-			{
-				components[i].realBalance  = gain*components[i].realBalance/oldGain;
-				components[i].imagBalance  = gain*components[i].imagBalance/oldGain;
-			}
-		}
-
-		float angle = 0;
-		//recalculate the spectral components
-		for (int j = firstIndex;j<length;j++)
-		{
-			for (int i = 0;i<NUM_PERIODICITIES;i++)
-			{
-				angle = 2*M_PI*(float)times[j]/periods[i];
-				components[i].realStates   += states[j]*cos(angle);
-				components[i].imagStates   += states[j]*sin(angle);
-				components[i].realBalance  += gain*cos(angle);
-				components[i].imagBalance  += gain*sin(angle);
-			}
-		}
-		order = -1;
+  //discard already known observations
+  // 丢弃已知的观察结果
+  for (int i = 0; i < length; i++)
+  {
+    if (times[i] <= lastTime)
+	{
+      firstIndex++;
 	}
-	measurements+=length;
-	return numUpdated; 
+  }
+
+  // numUpdated 表示添加的观察值（即单元格占据率）的数量，一般 length = 1，所以 numUpdated = 1
+  int numUpdated = length - firstIndex;
+
+  //verify if there is an actual update
+  // 验证是否有实际的更新
+  if (numUpdated <= 0)
+  {
+    return numUpdated;
+  }
+
+  lastTime = times[length - 1];          // lastTime 记录上一次添加观察值的时间
+  lastMeasurement = states[length - 1];  // lastMeasurement 记录上一次加入的观察值
+
+  //update the gains accordingly
+  // 相应地更新 gains
+  float oldGain = 0;
+  float newGain = 0;
+  for (int j = firstIndex; j < length; j++)
+  {
+    // newGain 表示所有新添加的观察值的总和。
+	// 若 length = 1，则 newGain = states[0]，等于加入的单个单元格的占据率。
+    newGain += states[j];
+  }
+  // 添加长度为 length 的观测值后，更新该单元格的平均占据率
+  gain = (gain * measurements + newGain) / (measurements + length);
+
+  // 如果单元格的平均占据率 gain 大于0，并且该单元格是第一次添加观察值，则初始化频谱
+  if (gain > 0 && components == NULL)
+  {
+    initializeFrequencies();  // 初始化频谱
+  }
+
+  if (components != NULL)
+  {
+    //recalculate spectral balance - this is beneficial is the process period does not match the length of the data
+	// 重新计算谐波平衡 - 如果处理周期与数据长度不匹配，这是有好处的
+    if (oldGain > 0)
+	{
+      for (int i = 0; i < NUM_PERIODICITIES; i++)
+      {
+        components[i].realBalance  = gain * components[i].realBalance / oldGain;
+        components[i].imagBalance  = gain * components[i].imagBalance / oldGain;
+      }
+    }
+
+    float angle = 0;
+
+	//recalculate the spectral components
+    // 重新计算谐波成分
+	for (int j = firstIndex; j < length; j++)
+    {
+      for (int i = 0; i < NUM_PERIODICITIES; i++)
+      {
+        angle = 2 * M_PI * (float)times[j] / periods[i];     // 根据周期 periods[i] 计算复数在复平面旋转的角度
+        components[i].realStates += states[j] * cos(angle);  // 计算复平面的实部，states[j] 为模长
+        components[i].imagStates += states[j] * sin(angle);  // 计算复平面的虚部，states[j] 为模长
+        components[i].realBalance += gain * cos(angle);
+        components[i].imagBalance += gain * sin(angle);
+      }
+    }
+
+    order = -1;
+  }
+
+  measurements += length;
+
+  return numUpdated;  // 返回添加的观察值的数量
 }
 
 int CFrelement::update(unsigned char orderi)

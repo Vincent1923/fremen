@@ -11,7 +11,7 @@
 #define NUM_PERIODICITIES 24
 #define SATURATION 0.000
 #define FREMEN_AMPLITUDE_THRESHOLD 0.0
-	
+
 /**
 @author Tom Krajnik
 */
