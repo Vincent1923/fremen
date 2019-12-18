@@ -48,6 +48,13 @@ class CFrelement2DGrid
     returns the number of predicted cells*/
   /*使用给定的阶数估计在给定时间的占用概率[0..100]
     返回预测的单元格数量*/
+  /**
+   * @brief estimate  使用给定的阶数，在给定时间对栅格地图每一个单元格的占据概率进行估计，占据概率的范围为[0..100]
+   * @param time      估计栅格地图的占据概率的时间
+   * @param states    估计的栅格地图的占据率
+   * @param order     给定的阶数
+   * @return          0
+   */
   int estimate(uint32_t time, int8_t states[], int order);
 
   /*estimates the occupancy entropies [0..100] for the given time with a given order 

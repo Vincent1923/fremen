@@ -70,7 +70,7 @@ int CFrelement2DGrid::add(uint32_t time, int8_t states[], int widthi, int height
   { 
     for (int i = 0; i < numFrelements; i++)  // 遍历栅格地图
     {
-      if (states[i] != -1)  // 查找栅格地图中的已探索区域（-1表示未探索区域），即自由空间或者障碍物
+      if (states[i] != -1)  // 查找栅格地图中的已探索区域（-1 表示未探索区域），即自由空间或者障碍物
       {
         if (frelementArray[i] == NULL)
         {
@@ -78,7 +78,8 @@ int CFrelement2DGrid::add(uint32_t time, int8_t states[], int widthi, int height
 		}
 
         float signal = ((float)states[i]) / 100.0;  // signal 按 100 缩放
-        frelementArray[i]->add(&time, &signal, 1);  // 对每一个单元格添加观察值
+		// 对每一个单元格添加观察值，第三个参数表示观察值的数量，这里1表示每次只添加一个观察值
+        frelementArray[i]->add(&time, &signal, 1);
       }
     }
 
@@ -88,19 +89,32 @@ int CFrelement2DGrid::add(uint32_t time, int8_t states[], int widthi, int height
   return result;
 }
 
-int CFrelement2DGrid::estimate(uint32_t time,int8_t states[],int order)
+// 使用给定的阶数 order，在给定时间 time 对栅格地图每一个单元格的占据概率进行估计，占据概率的范围为[0..100]
+// 最后估计的栅格地图的占用率保存在 states[]
+int CFrelement2DGrid::estimate(uint32_t time, int8_t states[], int order)
 {
-	float prob;
-	for (int i = 0;i<numFrelements;i++)
+  // 单个单元格的占据率，按 100 进行缩放（缩小了 100 倍）
+  float prob;
+
+  // 遍历栅格地图
+  for (int i = 0; i < numFrelements; i++)
+  {
+	// 检查单元格是否已经分配空间进行初始化，单元格分配空间是在 add 中进行，
+	// 只有在添加地图时该单元格是已探索区域（自由空间或者障碍物），才会分配空间。
+    if (frelementArray[i] == NULL)  // 该单元格还是未探索区域
 	{
-		if (frelementArray[i] == NULL){
-			states[i] = -1;
-		}else{
-			frelementArray[i]->estimate(&time,&prob,1,order);
-			states[i] = (int8_t)(100.0*prob);
-		}
-	}
-	return 0;
+      states[i] = -1;  // 把地图对应单元格赋值为 -1，-1 表示未探索区域
+    }
+    else  // 该单元格是已探索区域
+    {
+	  // 对单元格的占据率进行预测和估计，1 表示 length，order 表示阶数，prob 为估计的占据率
+      frelementArray[i]->estimate(&time, &prob, 1, order);
+	  // states[i] 为最终返回的单元格的占据率，比 prob 扩大 100 倍
+      states[i] = (int8_t)(100.0 * prob);
+    }
+  }
+
+  return 0;
 }
 
 int CFrelement2DGrid::estimateEntropy(uint32_t time,int8_t states[],int order)
