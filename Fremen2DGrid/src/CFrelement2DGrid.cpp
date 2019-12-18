@@ -184,8 +184,8 @@ int CFrelement2DGrid::evaluate(uint32_t time, int8_t states[], int order, float 
   {
     if (errs[i] < minError)
     {
-      index = i;	
-      minError = errs[i];	
+      index = i;
+      minError = errs[i];
     }
   }
 
