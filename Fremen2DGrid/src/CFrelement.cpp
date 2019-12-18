@@ -1,36 +1,51 @@
 #include "CFrelement.h"
 
 using namespace std;
+
 static bool debug = false; 
 
-int fremenSort(const void* i,const void* j) 
+int fremenSort(const void* i,const void* j)
 {
-	 if (((SFrelement*)i)->amplitude < ((SFrelement*)j)->amplitude) return +1;
-	 return -1;
+  if (((SFrelement*)i)->amplitude < ((SFrelement*)j)->amplitude)
+  {
+    return +1;
+  }
+
+  return -1;
 }
 
+// 构造函数
 CFrelement::CFrelement()
 {
-	//initialization of the frequency set
-	frelements = NULL; 
-	components = NULL; 
-	gain = 0.5;
-	lastMeasurement = 0.5;
-	firstTime = -1;
-	lastTime = -1;
-	measurements = 0;
-	order = 0;
+  //initialization of the frequency set
+  // 初始化
+  frelements = NULL;
+  components = NULL;
+  gain = 0.5;
+  lastMeasurement = 0.5;
+  firstTime = -1;
+  lastTime = -1;
+  measurements = 0;
+  order = 0;
 }
 
 void CFrelement::initializeFrequencies()
 {
-	components = (SSpectralComponent*)calloc(NUM_PERIODICITIES,sizeof(SSpectralComponent));
+  // 初始化频谱分量，components 的数组长度为 NUM_PERIODICITIES
+  components = (SSpectralComponent*)calloc(NUM_PERIODICITIES, sizeof(SSpectralComponent));
 }
 
+// 析构函数
 CFrelement::~CFrelement()
 {
-	if (components != NULL) free(components);
-	if (frelements != NULL) free(frelements);
+  if (components != NULL)
+  {
+    free(components);
+  }
+  if (frelements != NULL)
+  {
+    free(frelements);
+  }
 }
 
 // adds new state observations at given times

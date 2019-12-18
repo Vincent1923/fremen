@@ -19,7 +19,7 @@ CFrelement2DGrid::CFrelement2DGrid(const char* name)
   frelementArray = NULL;
 }
 
-// 析够函数
+// 析构函数
 CFrelement2DGrid::~CFrelement2DGrid()
 {
   if (frelementArray != NULL)
